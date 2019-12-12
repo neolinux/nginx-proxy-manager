@@ -1,8 +1,6 @@
 // Objection Docs:
 // http://vincit.github.io/objection.js/
 
-'use strict';
-
 const db          = require('../db');
 const Model       = require('objection').Model;
 const User        = require('./user');
@@ -47,7 +45,7 @@ class ProxyHost extends Model {
     }
 
     static get jsonAttributes () {
-        return ['domain_names', 'meta'];
+        return ['domain_names', 'meta', 'locations'];
     }
 
     static get relationMappings () {

@@ -7,10 +7,22 @@
         <form>
             <ul class="nav nav-tabs" role="tablist">
                 <li role="presentation" class="nav-item"><a href="#details" aria-controls="tab1" role="tab" data-toggle="tab" class="nav-link active"><i class="fe fe-zap"></i> <%- i18n('all-hosts', 'details') %></a></li>
+                <li role="presentation" class="nav-item"><a href="#locations" aria-controls="tab4" role="tab" data-toggle="tab" class="nav-link"><i class="fe fe-layers"></i> <%- i18n('all-hosts', 'locations') %></a></li>
                 <li role="presentation" class="nav-item"><a href="#ssl-options" aria-controls="tab2" role="tab" data-toggle="tab" class="nav-link"><i class="fe fe-shield"></i> <%- i18n('str', 'ssl') %></a></li>
                 <li role="presentation" class="nav-item"><a href="#advanced" aria-controls="tab3" role="tab" data-toggle="tab" class="nav-link"><i class="fe fe-settings"></i> <%- i18n('all-hosts', 'advanced') %></a></li>
             </ul>
             <div class="tab-content">
+
+                <!-- Locations -->
+                <div class="tab-pane" id="locations">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <button type="button" class="btn btn-secondary add_location"><%- i18n('locations', 'new_location') %></button>
+                            <div class="locations_container mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Details -->
                 <div role="tabpanel" class="tab-pane active" id="details">
                     <div class="row">
@@ -20,7 +32,16 @@
                                 <input type="text" name="domain_names" class="form-control" id="input-domains" value="<%- domain_names.join(',') %>" required>
                             </div>
                         </div>
-                        <div class="col-sm-8 col-md-8">
+                        <div class="col-sm-3 col-md-3">
+                            <div class="form-group">
+                                <label class="form-label"><%- i18n('proxy-hosts', 'forward-scheme') %><span class="form-required">*</span></label>
+                                <select name="forward_scheme" class="form-control custom-select" placeholder="http">
+                                    <option value="http" <%- forward_scheme === 'http' ? 'selected' : '' %>>http</option>
+                                    <option value="https" <%- forward_scheme === 'https' ? 'selected' : '' %>>https</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-sm-5 col-md-5">
                             <div class="form-group">
                                 <label class="form-label"><%- i18n('proxy-hosts', 'forward-host') %><span class="form-required">*</span></label>
                                 <input type="text" name="forward_host" class="form-control text-monospace" placeholder="" value="<%- forward_host %>" autocomplete="off" maxlength="50" required>
@@ -59,6 +80,7 @@
                                 </label>
                             </div>
                         </div>
+
                         <div class="col-sm-12 col-md-12">
                             <div class="form-group">
                                 <label class="form-label"><%- i18n('proxy-hosts', 'access-list') %></label>
@@ -82,12 +104,39 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-sm-12 col-md-12">
+                        <div class="col-sm-6 col-md-6">
                             <div class="form-group">
                                 <label class="custom-switch">
                                     <input type="checkbox" class="custom-switch-input" name="ssl_forced" value="1"<%- ssl_forced ? ' checked' : '' %><%- certificate_id ? '' : ' disabled' %>>
                                     <span class="custom-switch-indicator"></span>
                                     <span class="custom-switch-description"><%- i18n('all-hosts', 'force-ssl') %></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-6">
+                            <div class="form-group">
+                                <label class="custom-switch">
+                                    <input type="checkbox" class="custom-switch-input" name="http2_support" value="1"<%- http2_support ? ' checked' : '' %><%- certificate_id ? '' : ' disabled' %>>
+                                    <span class="custom-switch-indicator"></span>
+                                    <span class="custom-switch-description"><%- i18n('all-hosts', 'http2-support') %></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-6">
+                            <div class="form-group">
+                                <label class="custom-switch">
+                                    <input type="checkbox" class="custom-switch-input" name="hsts_enabled" value="1"<%- hsts_enabled ? ' checked' : '' %><%- certificate_id && ssl_forced ? '' : ' disabled' %>>
+                                    <span class="custom-switch-indicator"></span>
+                                    <span class="custom-switch-description"><%- i18n('all-hosts', 'hsts-enabled') %> <a href="https://en.wikipedia.org/wiki/HTTP_Strict_Transport_Security" target="_blank"><i class="fe fe-help-circle"></i></a></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-6">
+                            <div class="form-group">
+                                <label class="custom-switch">
+                                    <input type="checkbox" class="custom-switch-input" name="hsts_subdomains" value="1"<%- hsts_subdomains ? ' checked' : '' %><%- certificate_id && ssl_forced && hsts_enabled ? '' : ' disabled' %>>
+                                    <span class="custom-switch-indicator"></span>
+                                    <span class="custom-switch-description"><%- i18n('all-hosts', 'hsts-subdomains') %></span>
                                 </label>
                             </div>
                         </div>
@@ -115,6 +164,12 @@
                 <div role="tabpanel" class="tab-pane" id="advanced">
                     <div class="row">
                         <div class="col-md-12">
+                            <p>Nginx variables available to you are:</p>
+                            <ul class="text-monospace">
+                                <li>$server          # Host/IP</li>
+                                <li>$port            # Port Number</li>
+                                <li>$forward_scheme  # http or https</li>
+                            </ul>
                             <div class="form-group mb-0">
                                 <label class="form-label"><%- i18n('all-hosts', 'advanced-config') %></label>
                                 <textarea name="advanced_config" rows="8" class="form-control text-monospace" placeholder="# <%- i18n('all-hosts', 'advanced-warning') %>"><%- advanced_config %></textarea>

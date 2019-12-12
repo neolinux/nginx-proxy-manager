@@ -1,5 +1,3 @@
-'use strict';
-
 const express             = require('express');
 const validator           = require('../../../lib/validator');
 const jwtdecode           = require('../../../lib/express/jwt-decode');
@@ -20,7 +18,7 @@ router
     .options((req, res) => {
         res.sendStatus(204);
     })
-    .all(jwtdecode()) // preferred so it doesn't apply to nonexistent routes
+    .all(jwtdecode())
 
     /**
      * GET /api/nginx/certificates
@@ -79,7 +77,7 @@ router
     .options((req, res) => {
         res.sendStatus(204);
     })
-    .all(jwtdecode()) // preferred so it doesn't apply to nonexistent routes
+    .all(jwtdecode())
 
     /**
      * GET /api/nginx/certificates/123
@@ -94,13 +92,13 @@ router
                 certificate_id: {
                     $ref: 'definitions#/definitions/id'
                 },
-                expand:  {
+                expand:         {
                     $ref: 'definitions#/definitions/expand'
                 }
             }
         }, {
             certificate_id: req.params.certificate_id,
-            expand:  (typeof req.query.expand === 'string' ? req.query.expand.split(',') : null)
+            expand:         (typeof req.query.expand === 'string' ? req.query.expand.split(',') : null)
         })
             .then(data => {
                 return internalCertificate.get(res.locals.access, {
@@ -157,7 +155,7 @@ router
     .options((req, res) => {
         res.sendStatus(204);
     })
-    .all(jwtdecode()) // preferred so it doesn't apply to nonexistent routes
+    .all(jwtdecode())
 
     /**
      * POST /api/nginx/certificates/123/upload
@@ -182,6 +180,34 @@ router
     });
 
 /**
+ * Renew LE Certs
+ *
+ * /api/nginx/certificates/123/renew
+ */
+router
+    .route('/:certificate_id/renew')
+    .options((req, res) => {
+        res.sendStatus(204);
+    })
+    .all(jwtdecode())
+
+    /**
+     * POST /api/nginx/certificates/123/renew
+     *
+     * Renew certificate
+     */
+    .post((req, res, next) => {
+        internalCertificate.renew(res.locals.access, {
+            id: parseInt(req.params.certificate_id, 10)
+        })
+            .then(result => {
+                res.status(200)
+                    .send(result);
+            })
+            .catch(next);
+    });
+
+/**
  * Validate Certs before saving
  *
  * /api/nginx/certificates/validate
@@ -191,7 +217,7 @@ router
     .options((req, res) => {
         res.sendStatus(204);
     })
-    .all(jwtdecode()) // preferred so it doesn't apply to nonexistent routes
+    .all(jwtdecode())
 
     /**
      * POST /api/nginx/certificates/validate

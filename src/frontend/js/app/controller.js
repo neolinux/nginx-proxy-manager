@@ -1,5 +1,3 @@
-'use strict';
-
 const Backbone = require('backbone');
 const Cache    = require('./cache');
 const Tokens   = require('./tokens');
@@ -343,6 +341,19 @@ module.exports = {
     },
 
     /**
+     * Certificate Renew
+     *
+     * @param model
+     */
+    showNginxCertificateRenew: function (model) {
+        if (Cache.User.isAdmin() || Cache.User.canManage('certificates')) {
+            require(['./main', './nginx/certificates/renew'], function (App, View) {
+                App.UI.showModalDialog(new View({model: model}));
+            });
+        }
+    },
+
+    /**
      * Certificate Delete Confirm
      *
      * @param model
@@ -380,6 +391,36 @@ module.exports = {
             require(['./main', './audit-log/meta'], function (App, View) {
                 App.UI.showModalDialog(new View({model: model}));
             });
+        }
+    },
+
+    /**
+     * Settings
+     */
+    showSettings: function () {
+        let controller = this;
+        if (Cache.User.isAdmin()) {
+            require(['./main', './settings/main'], (App, View) => {
+                controller.navigate('/settings');
+                App.UI.showAppContent(new View());
+            });
+        } else {
+            this.showDashboard();
+        }
+    },
+
+    /**
+     * Settings Item Form
+     *
+     * @param model
+     */
+    showSettingForm: function (model) {
+        if (Cache.User.isAdmin()) {
+            if (model.get('id') === 'default-site') {
+                require(['./main', './settings/default-site/main'], function (App, View) {
+                    App.UI.showModalDialog(new View({model: model}));
+                });
+            }
         }
     },
 

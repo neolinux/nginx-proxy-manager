@@ -1,5 +1,3 @@
-'use strict';
-
 const _                   = require('lodash');
 const error               = require('../lib/error');
 const deadHostModel       = require('../models/dead_host');
@@ -47,6 +45,7 @@ const internalDeadHost = {
             .then(() => {
                 // At this point the domains should have been checked
                 data.owner_user_id = access.token.getUserId(1);
+                data               = internalHost.cleanSslHstsData(data);
 
                 return deadHostModel
                     .query()
@@ -89,11 +88,11 @@ const internalDeadHost = {
 
                 // Add to audit log
                 return internalAuditLog.add(access, {
-                    action:      'created',
-                    object_type: 'dead-host',
-                    object_id:   row.id,
-                    meta:        data
-                })
+                        action:      'created',
+                        object_type: 'dead-host',
+                        object_id:   row.id,
+                        meta:        data
+                    })
                     .then(() => {
                         return row;
                     });
@@ -103,7 +102,7 @@ const internalDeadHost = {
     /**
      * @param  {Access}  access
      * @param  {Object}  data
-     * @param  {Integer} data.id
+     * @param  {Number}  data.id
      * @return {Promise}
      */
     update: (access, data) => {
@@ -144,9 +143,9 @@ const internalDeadHost = {
 
                 if (create_certificate) {
                     return internalCertificate.createQuickCertificate(access, {
-                        domain_names: data.domain_names || row.domain_names,
-                        meta:         _.assign({}, row.meta, data.meta)
-                    })
+                            domain_names: data.domain_names || row.domain_names,
+                            meta:         _.assign({}, row.meta, data.meta)
+                        })
                         .then(cert => {
                             // update host with cert id
                             data.certificate_id = cert.id;
@@ -162,7 +161,9 @@ const internalDeadHost = {
                 // Add domain_names to the data in case it isn't there, so that the audit log renders correctly. The order is important here.
                 data = _.assign({}, {
                     domain_names: row.domain_names
-                },data);
+                }, data);
+
+                data = internalHost.cleanSslHstsData(data, row);
 
                 return deadHostModel
                     .query()
@@ -171,11 +172,11 @@ const internalDeadHost = {
                     .then(saved_row => {
                         // Add to audit log
                         return internalAuditLog.add(access, {
-                            action:      'updated',
-                            object_type: 'dead-host',
-                            object_id:   row.id,
-                            meta:        data
-                        })
+                                action:      'updated',
+                                object_type: 'dead-host',
+                                object_id:   row.id,
+                                meta:        data
+                            })
                             .then(() => {
                                 return _.omit(saved_row, omissions());
                             });
@@ -183,15 +184,15 @@ const internalDeadHost = {
             })
             .then(() => {
                 return internalDeadHost.get(access, {
-                    id:     data.id,
-                    expand: ['owner', 'certificate']
-                })
+                        id:     data.id,
+                        expand: ['owner', 'certificate']
+                    })
                     .then(row => {
                         // Configure nginx
                         return internalNginx.configure(deadHostModel, 'dead_host', row)
                             .then(new_meta => {
                                 row.meta = new_meta;
-                                row = internalHost.cleanRowCertificateMeta(row);
+                                row      = internalHost.cleanRowCertificateMeta(row);
                                 return _.omit(row, omissions());
                             });
                     });
@@ -201,7 +202,7 @@ const internalDeadHost = {
     /**
      * @param  {Access}   access
      * @param  {Object}   data
-     * @param  {Integer}  data.id
+     * @param  {Number}   data.id
      * @param  {Array}    [data.expand]
      * @param  {Array}    [data.omit]
      * @return {Promise}
@@ -248,7 +249,7 @@ const internalDeadHost = {
     /**
      * @param {Access}  access
      * @param {Object}  data
-     * @param {Integer} data.id
+     * @param {Number}  data.id
      * @param {String}  [data.reason]
      * @returns {Promise}
      */
@@ -279,6 +280,104 @@ const internalDeadHost = {
                         // Add to audit log
                         return internalAuditLog.add(access, {
                             action:      'deleted',
+                            object_type: 'dead-host',
+                            object_id:   row.id,
+                            meta:        _.omit(row, omissions())
+                        });
+                    });
+            })
+            .then(() => {
+                return true;
+            });
+    },
+
+    /**
+     * @param {Access}  access
+     * @param {Object}  data
+     * @param {Number}  data.id
+     * @param {String}  [data.reason]
+     * @returns {Promise}
+     */
+    enable: (access, data) => {
+        return access.can('dead_hosts:update', data.id)
+            .then(() => {
+                return internalDeadHost.get(access, {
+                    id:     data.id,
+                    expand: ['certificate', 'owner']
+                });
+            })
+            .then(row => {
+                if (!row) {
+                    throw new error.ItemNotFoundError(data.id);
+                } else if (row.enabled) {
+                    throw new error.ValidationError('Host is already enabled');
+                }
+
+                row.enabled = 1;
+
+                return deadHostModel
+                    .query()
+                    .where('id', row.id)
+                    .patch({
+                        enabled: 1
+                    })
+                    .then(() => {
+                        // Configure nginx
+                        return internalNginx.configure(deadHostModel, 'dead_host', row);
+                    })
+                    .then(() => {
+                        // Add to audit log
+                        return internalAuditLog.add(access, {
+                            action:      'enabled',
+                            object_type: 'dead-host',
+                            object_id:   row.id,
+                            meta:        _.omit(row, omissions())
+                        });
+                    });
+            })
+            .then(() => {
+                return true;
+            });
+    },
+
+    /**
+     * @param {Access}  access
+     * @param {Object}  data
+     * @param {Number}  data.id
+     * @param {String}  [data.reason]
+     * @returns {Promise}
+     */
+    disable: (access, data) => {
+        return access.can('dead_hosts:update', data.id)
+            .then(() => {
+                return internalDeadHost.get(access, {id: data.id});
+            })
+            .then(row => {
+                if (!row) {
+                    throw new error.ItemNotFoundError(data.id);
+                } else if (!row.enabled) {
+                    throw new error.ValidationError('Host is already disabled');
+                }
+
+                row.enabled = 0;
+
+                return deadHostModel
+                    .query()
+                    .where('id', row.id)
+                    .patch({
+                        enabled: 0
+                    })
+                    .then(() => {
+                        // Delete Nginx Config
+                        return internalNginx.deleteConfig('dead_host', row)
+                            .then(() => {
+                                return internalNginx.reload();
+                            });
+                    })
+                    .then(() => {
+                        // Add to audit log
+                        return internalAuditLog.add(access, {
+                            action:      'disabled',
                             object_type: 'dead-host',
                             object_id:   row.id,
                             meta:        _.omit(row, omissions())
@@ -338,7 +437,7 @@ const internalDeadHost = {
     /**
      * Report use
      *
-     * @param   {Integer} user_id
+     * @param   {Number}  user_id
      * @param   {String}  visibility
      * @returns {Promise}
      */

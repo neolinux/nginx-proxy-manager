@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 
-'use strict';
-
 const logger = require('./logger').global;
 
 function appStart () {
@@ -11,6 +9,7 @@ function appStart () {
     const app                 = require('./app');
     const apiValidator        = require('./lib/validator/api');
     const internalCertificate = require('./internal/certificate');
+    const internalIpRanges    = require('./internal/ip_ranges');
 
     return migrate.latest()
         .then(setup)
@@ -18,9 +17,11 @@ function appStart () {
         .then(() => {
             return apiValidator.loadSchemas;
         })
+        .then(internalIpRanges.fetch)
         .then(() => {
 
             internalCertificate.initTimer();
+            internalIpRanges.initTimer();
 
             const server = app.listen(81, () => {
                 logger.info('PID ' + process.pid + ' listening on port 81 ...');

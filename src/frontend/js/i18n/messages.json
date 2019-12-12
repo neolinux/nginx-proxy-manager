@@ -14,6 +14,8 @@
       "save": "Save",
       "cancel": "Cancel",
       "close": "Close",
+      "enable": "Enable",
+      "disable": "Disable",
       "sure": "Yes I'm Sure",
       "disabled": "Disabled",
       "choose-file": "Choose file",
@@ -29,7 +31,9 @@
       "online": "Online",
       "offline": "Offline",
       "unknown": "Unknown",
-      "expires": "Expires"
+      "expires": "Expires",
+      "value": "Value",
+      "please-wait": "Please wait..."
     },
     "login": {
       "title": "Login to your account"
@@ -54,7 +58,7 @@
     },
     "footer": {
       "fork-me": "Fork me on Github",
-      "copy": "&copy; 2018 <a href=\"{url}\" target=\"_blank\">jc21.com</a>.",
+      "copy": "&copy; 2019 <a href=\"{url}\" target=\"_blank\">jc21.com</a>.",
       "theme": "Theme by <a href=\"{url}\" target=\"_blank\">Tabler</a>"
     },
     "dashboard": {
@@ -65,6 +69,7 @@
       "details": "Details",
       "enable-ssl": "Enable SSL",
       "force-ssl": "Force SSL",
+      "http2-support": "HTTP/2 Support",
       "domain-names": "Domain Names",
       "cert-provider": "Certificate Provider",
       "block-exploits": "Block Common Exploits",
@@ -76,7 +81,16 @@
       "no-ssl": "This host will not use HTTPS",
       "advanced": "Advanced",
       "advanced-warning": "Enter your custom Nginx configuration here at your own risk!",
-      "advanced-config": "Custom Nginx Configuration"
+      "advanced-config": "Custom Nginx Configuration",
+      "hsts-enabled": "HSTS Enabled",
+      "hsts-subdomains": "HSTS Subdomains",
+      "locations": "Custom locations"
+    },
+    "locations": {
+      "new_location": "Add location",
+      "path": "/path",
+      "location_label": "Define location",
+      "delete": "Delete"
     },
     "ssl": {
       "letsencrypt": "Let's Encrypt",
@@ -92,6 +106,7 @@
       "empty": "There are no Proxy Hosts",
       "add": "Add Proxy Host",
       "form-title": "{id, select, undefined{New} other{Edit}} Proxy Host",
+      "forward-scheme": "Scheme",
       "forward-host": "Forward Hostname / IP",
       "forward-port": "Forward Port",
       "delete": "Delete Proxy Host",
@@ -99,7 +114,9 @@
       "help-title": "What is a Proxy Host?",
       "help-content": "A Proxy Host is the incoming endpoint for a web service that you want to forward.\nIt provides optional SSL termination for your service that might not have SSL support built in.\nProxy Hosts are the most common use for the Nginx Proxy Manager.",
       "access-list": "Access List",
-      "allow-websocket-upgrade": "Allow Websocket HTTP Upgrades"
+      "allow-websocket-upgrade": "Websockets Support",
+      "ignore-invalid-upstream-ssl": "Ignore Invalid SSL",
+      "custom-forward-host-help": "Use 1.1.1.1/path for sub-folder forwarding"
     },
     "redirection-hosts": {
       "title": "Redirection Hosts",
@@ -153,7 +170,9 @@
       "help-content": "TODO",
       "other-certificate": "Certificate",
       "other-certificate-key": "Certificate Key",
-      "other-intermediate-certificate": "Intermediate Certificate"
+      "other-intermediate-certificate": "Intermediate Certificate",
+      "force-renew": "Renew Now",
+      "renew-title": "Renew Let'sEncrypt Certificate"
     },
     "access-lists": {
       "title": "Access Lists",
@@ -210,9 +229,20 @@
       "created": "Created {name}",
       "updated": "Updated {name}",
       "deleted": "Deleted {name}",
+      "enabled": "Enabled {name}",
+      "disabled": "Disabled {name}",
+      "renewed": "Renewed {name}",
       "meta-title": "Details for Event",
       "view-meta": "View Details",
       "date": "Date"
+    },
+    "settings": {
+      "title": "Settings",
+      "default-site": "Default Site",
+      "default-site-congratulations": "Congratulations Page",
+      "default-site-404": "404 Page",
+      "default-site-html": "Custom Page",
+      "default-site-redirect": "Redirect"
     }
   }
 }

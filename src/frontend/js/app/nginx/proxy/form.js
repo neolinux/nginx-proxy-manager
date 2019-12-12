@@ -1,12 +1,13 @@
-'use strict';
-
 const Mn                     = require('backbone.marionette');
 const App                    = require('../../main');
 const ProxyHostModel         = require('../../../models/proxy-host');
+const ProxyLocationModel     = require('../../../models/proxy-host-location');
 const template               = require('./form.ejs');
 const certListItemTemplate   = require('../certificates-list-item.ejs');
 const accessListItemTemplate = require('./access-list-item.ejs');
+const CustomLocation         = require('./location');
 const Helpers                = require('../../../lib/helpers');
+
 
 require('jquery-serializejson');
 require('selectize');
@@ -15,6 +16,8 @@ module.exports = Mn.View.extend({
     template:  template,
     className: 'modal-dialog',
 
+    locationsCollection: new ProxyLocationModel.Collection(),
+
     ui: {
         form:               'form',
         domain_names:       'input[name="domain_names"]',
@@ -22,10 +25,20 @@ module.exports = Mn.View.extend({
         buttons:            '.modal-footer button',
         cancel:             'button.cancel',
         save:               'button.save',
+        add_location_btn:   'button.add_location',
+        locations_container:'.locations_container',
         certificate_select: 'select[name="certificate_id"]',
         access_list_select: 'select[name="access_list_id"]',
         ssl_forced:         'input[name="ssl_forced"]',
+        hsts_enabled:       'input[name="hsts_enabled"]',
+        hsts_subdomains:    'input[name="hsts_subdomains"]',
+        http2_support:      'input[name="http2_support"]',
+        forward_scheme:     'select[name="forward_scheme"]',
         letsencrypt:        '.letsencrypt'
+    },
+
+    regions: {
+        locations_regions: '@ui.locations_container'
     },
 
     events: {
@@ -38,7 +51,51 @@ module.exports = Mn.View.extend({
             }
 
             let enabled = id === 'new' || parseInt(id, 10) > 0;
-            this.ui.ssl_forced.prop('disabled', !enabled).parents('.form-group').css('opacity', enabled ? 1 : 0.5);
+
+            let inputs = this.ui.ssl_forced.add(this.ui.http2_support);
+            inputs
+                .prop('disabled', !enabled)
+                .parents('.form-group')
+                .css('opacity', enabled ? 1 : 0.5);
+
+            if (!enabled) {
+                inputs.prop('checked', false);
+            }
+
+            inputs.trigger('change');
+        },
+
+        'change @ui.ssl_forced': function () {
+            let checked = this.ui.ssl_forced.prop('checked');
+            this.ui.hsts_enabled
+                .prop('disabled', !checked)
+                .parents('.form-group')
+                .css('opacity', checked ? 1 : 0.5);
+
+            if (!checked) {
+                this.ui.hsts_enabled.prop('checked', false);
+            }
+
+            this.ui.hsts_enabled.trigger('change');
+        },
+
+        'change @ui.hsts_enabled': function () {
+            let checked = this.ui.hsts_enabled.prop('checked');
+            this.ui.hsts_subdomains
+                .prop('disabled', !checked)
+                .parents('.form-group')
+                .css('opacity', checked ? 1 : 0.5);
+
+            if (!checked) {
+                this.ui.hsts_subdomains.prop('checked', false);
+            }
+        },
+
+        'click @ui.add_location_btn': function (e) {
+            e.preventDefault();
+            
+            const model = new ProxyLocationModel.Model();
+            this.locationsCollection.add(model);
         },
 
         'click @ui.save': function (e) {
@@ -52,15 +109,25 @@ module.exports = Mn.View.extend({
             let view = this;
             let data = this.ui.form.serializeJSON();
 
+            // Add locations
+            data.locations = [];
+            this.locationsCollection.models.forEach((location) => {
+                data.locations.push(location.toJSON());
+            });
+
+            // Serialize collects path from custom locations
+            // This field must be removed from root object
+            delete data.path;
+
             // Manipulate
             data.forward_port            = parseInt(data.forward_port, 10);
             data.block_exploits          = !!data.block_exploits;
             data.caching_enabled         = !!data.caching_enabled;
             data.allow_websocket_upgrade = !!data.allow_websocket_upgrade;
-
-            if (typeof data.ssl_forced !== 'undefined' && data.ssl_forced === '1') {
-                data.ssl_forced = true;
-            }
+            data.http2_support           = !!data.http2_support;
+            data.hsts_enabled            = !!data.hsts_enabled;
+            data.hsts_subdomains         = !!data.hsts_subdomains;
+            data.ssl_forced              = !!data.ssl_forced;
 
             if (typeof data.domain_names === 'string' && data.domain_names) {
                 data.domain_names = data.domain_names.split(',');
@@ -82,7 +149,7 @@ module.exports = Mn.View.extend({
 
                 data.meta.letsencrypt_agree = data.meta.letsencrypt_agree === '1';
             } else {
-                data.certificate_id = parseInt(data.certificate_id, 0);
+                data.certificate_id = parseInt(data.certificate_id, 10);
             }
 
             let method = App.Api.Nginx.ProxyHosts.create;
@@ -122,6 +189,9 @@ module.exports = Mn.View.extend({
     onRender: function () {
         let view = this;
 
+        this.ui.ssl_forced.trigger('change');
+        this.ui.hsts_enabled.trigger('change');
+
         // Domain names
         this.ui.domain_names.selectize({
             delimiter:    ',',
@@ -137,7 +207,6 @@ module.exports = Mn.View.extend({
         });
 
         // Access Lists
-        this.ui.letsencrypt.hide();
         this.ui.access_list_select.selectize({
             valueField:       'id',
             labelField:       'name',
@@ -202,6 +271,21 @@ module.exports = Mn.View.extend({
     initialize: function (options) {
         if (typeof options.model === 'undefined' || !options.model) {
             this.model = new ProxyHostModel.Model();
+        }
+
+        this.locationsCollection = new ProxyLocationModel.Collection();
+
+        // Custom locations
+        this.showChildView('locations_regions', new CustomLocation.LocationCollectionView({
+            collection: this.locationsCollection
+        }));
+
+        // Check wether there are any location defined
+        if (options.model && Array.isArray(options.model.attributes.locations)) {
+            options.model.attributes.locations.forEach((location) => {
+                let m = new ProxyLocationModel.Model(location);
+                this.locationsCollection.add(m);
+            });
         }
     }
 });

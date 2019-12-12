@@ -32,11 +32,23 @@
     "ssl_forced": {
       "$ref": "../definitions.json#/definitions/ssl_forced"
     },
+    "hsts_enabled": {
+      "$ref": "../definitions.json#/definitions/hsts_enabled"
+    },
+    "hsts_subdomains": {
+      "$ref": "../definitions.json#/definitions/hsts_subdomains"
+    },
+    "http2_support": {
+      "$ref": "../definitions.json#/definitions/http2_support"
+    },
     "block_exploits": {
       "$ref": "../definitions.json#/definitions/block_exploits"
     },
     "advanced_config": {
       "type": "string"
+    },
+    "enabled": {
+      "$ref": "../definitions.json#/definitions/enabled"
     },
     "meta": {
       "type": "object"
@@ -67,11 +79,23 @@
     "ssl_forced": {
       "$ref": "#/definitions/ssl_forced"
     },
+    "hsts_enabled": {
+      "$ref": "#/definitions/hsts_enabled"
+    },
+    "hsts_subdomains": {
+      "$ref": "#/definitions/hsts_subdomains"
+    },
+    "http2_support": {
+      "$ref": "#/definitions/http2_support"
+    },
     "block_exploits": {
       "$ref": "#/definitions/block_exploits"
     },
     "advanced_config": {
       "$ref": "#/definitions/advanced_config"
+    },
+    "enabled": {
+      "$ref": "#/definitions/enabled"
     },
     "meta": {
       "$ref": "#/definitions/meta"
@@ -128,6 +152,15 @@
           "ssl_forced": {
             "$ref": "#/definitions/ssl_forced"
           },
+          "hsts_enabled": {
+            "$ref": "#/definitions/hsts_enabled"
+          },
+          "hsts_subdomains": {
+            "$ref": "#/definitions/hsts_enabled"
+          },
+          "http2_support": {
+            "$ref": "#/definitions/http2_support"
+          },
           "block_exploits": {
             "$ref": "#/definitions/block_exploits"
           },
@@ -174,6 +207,15 @@
           "ssl_forced": {
             "$ref": "#/definitions/ssl_forced"
           },
+          "hsts_enabled": {
+            "$ref": "#/definitions/hsts_enabled"
+          },
+          "hsts_subdomains": {
+            "$ref": "#/definitions/hsts_enabled"
+          },
+          "http2_support": {
+            "$ref": "#/definitions/http2_support"
+          },
           "block_exploits": {
             "$ref": "#/definitions/block_exploits"
           },
@@ -198,6 +240,34 @@
       "access": "private",
       "method": "DELETE",
       "rel": "delete",
+      "http_header": {
+        "$ref": "../examples.json#/definitions/auth_header"
+      },
+      "targetSchema": {
+        "type": "boolean"
+      }
+    },
+    {
+      "title": "Enable",
+      "description": "Enables a existing Redirection Host",
+      "href": "/nginx/redirection-hosts/{definitions.identity.example}/enable",
+      "access": "private",
+      "method": "POST",
+      "rel": "update",
+      "http_header": {
+        "$ref": "../examples.json#/definitions/auth_header"
+      },
+      "targetSchema": {
+        "type": "boolean"
+      }
+    },
+    {
+      "title": "Disable",
+      "description": "Disables a existing Redirection Host",
+      "href": "/nginx/redirection-hosts/{definitions.identity.example}/disable",
+      "access": "private",
+      "method": "POST",
+      "rel": "update",
       "http_header": {
         "$ref": "../examples.json#/definitions/auth_header"
       },

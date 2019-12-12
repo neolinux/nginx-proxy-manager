@@ -1,5 +1,3 @@
-'use strict';
-
 const AppRouter  = require('marionette.approuter');
 const Controller = require('./controller');
 
@@ -15,6 +13,7 @@ module.exports = AppRouter.default.extend({
         'nginx/access':       'showNginxAccess',
         'nginx/certificates': 'showNginxCertificates',
         'audit-log':          'showAuditLog',
+        'settings':           'showSettings',
         '*default':           'showDashboard'
     }
 });
